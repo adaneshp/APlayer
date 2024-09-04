@@ -103,4 +103,4 @@ When the script exits (by pressing `Q`), it will release the video file and clos
 ## Customization
 
 - **Video Path**: Change the `video_file` variable to specify a different video file.
-- **Label Range**: Modify the range check in the label input section to allow for different label values (Currently set to 1 to 60).
+- **Label Range**: Modify the range check in the label input section to allow for different label values (Currently set to 1 to 69).

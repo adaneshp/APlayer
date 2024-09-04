@@ -27,7 +27,7 @@ def append_to_csv(csv_file, row):
 initialize_csv(csv_file)
 
 # Load the video file
-video_file = "/mnt/e/Location_1/temp1/L1P1C2I.mp4"  # Replace with your actual video file path
+video_file = "/path/to/your/video.mp4"  # Replace with your actual video file path
 cap = cv2.VideoCapture(video_file)
 
 # Initialize variables to store frame numbers

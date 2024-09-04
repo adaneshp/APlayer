@@ -37,7 +37,7 @@ end_frame = None
 # Get video frame rate to calculate frame delay
 fps = cap.get(cv2.CAP_PROP_FPS)
 if fps == 0:
-    fps = 30  # Fallback to a default value if FPS is not available
+    fps = 60  # Fallback to a default value if FPS is not available
 
 # Get total frame count
 total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
@@ -97,7 +97,7 @@ while cap.isOpened():
             # Append the label to CSV
             if start_frame is not None and label_buffer.isdigit():
                 label = int(label_buffer)
-                if 1 <= label <= 60:
+                if 1 <= label <= 69:
                     # Append to in-memory list and CSV
                     label_data.append([start_frame, end_frame, label])
                     append_to_csv(csv_file, [start_frame, end_frame, label])

@@ -27,7 +27,7 @@ def append_to_csv(csv_file, row):
 initialize_csv(csv_file)
 
 # Load the video file
-video_file = "/path/to/your/video.mp4"  # Replace with your actual video file path
+video_file = "/mnt/e/Location_1/temp1/L1P1C2I.mp4"  # Replace with your actual video file path
 cap = cv2.VideoCapture(video_file)
 
 # Initialize variables to store frame numbers
@@ -37,7 +37,7 @@ end_frame = None
 # Get video frame rate to calculate frame delay
 fps = cap.get(cv2.CAP_PROP_FPS)
 if fps == 0:
-    fps = 60  # Fallback to a default value if FPS is not available
+    fps = 30  # Fallback to a default value if FPS is not available
 
 # Get total frame count
 total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
@@ -97,7 +97,7 @@ while cap.isOpened():
             # Append the label to CSV
             if start_frame is not None and label_buffer.isdigit():
                 label = int(label_buffer)
-                if 1 <= label <= 69:
+                if 1 <= label <= 70:
                     # Append to in-memory list and CSV
                     label_data.append([start_frame, end_frame, label])
                     append_to_csv(csv_file, [start_frame, end_frame, label])
@@ -106,7 +106,7 @@ while cap.isOpened():
                     label_input_mode = False
                     label_buffer = ""
                 else:
-                    print("Invalid label. Please enter a number between 1 and 60.")
+                    print("Invalid label. Please enter a number between 1 and 70.")
             else:
                 print("Label input canceled or invalid input.")
                 label_input_mode = False

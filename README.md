@@ -6,6 +6,43 @@ This is not a complicated program. It is just a simple script. I needed a lightw
 
 I don't usually share all the projects and code I develop, but I felt this one saved me a lot of time, so I wanted to share it with everyone. I hope it helps!
 
+## Update Notes
+
+### Version: v1.1
+
+In this update, several key changes have been made to improve the video player functionality and user experience. Below is a detailed summary of the new features, key remappings, and improvements:
+
+### Key Features and Changes:
+
+1. **Play Speed Controls:**
+   - **`C`:** Now plays the video at 10x speed.
+   - **`X`:** Now plays the video at 5x speed.
+   - **`Z`:** Now plays the video at 2x speed.
+   
+2. **Frame Navigation:**
+   - **`D` or `RIGHT ARROW`:** Move forward by one frame when the video is paused.
+   - **`A` or `LEFT ARROW`:** Move backward by one frame when the video is paused.
+   - **`J`:** Jump to a specific frame by entering the frame number (works only when the video is paused).
+
+3. **Jump Forward Controls:**
+   - **`F`:** Jumps the video forward by 10 seconds.
+   - **`G`:** Jumps the video forward by 30 seconds.
+
+4. **Start and End Frame Labeling:**
+   - **`S`:** Sets the current frame as the start frame for labeling.
+   - **`E`:** Sets the current frame as the end frame and prompts for a label.
+
+5. **Play/Pause Toggle:**
+   - **`SPACE`:** Toggles between play and pause at normal speed.
+
+6. **Quit Program:**
+   - **`Q`:** Quit and exit the video player.
+
+### Visual Improvements:
+
+- **Legend Display:** A legend showing the available controls is always displayed in the top right corner of the video player.
+- **Legend and Frame Number Color:** The legend text and the frame number are now displayed in a bright green color to enhance visibility.
+
 ## Overview
 
 This script provides a simple tool for labeling sections within a video file. Users can navigate through the video, mark start and end frames for labels, and assign numerical labels to the captured segments. The labels are saved into a CSV file for further processing or analysis.

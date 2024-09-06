@@ -27,7 +27,7 @@ def append_to_csv(csv_file, row):
 initialize_csv(csv_file)
 
 # Load the video file
-video_file = "/mnt/e/Location_1/temp1/L1P1C2I.mp4"  # Replace with your actual video file path
+video_file = "path/to/video.mp4"  # Replace with your actual video file path
 cap = cv2.VideoCapture(video_file)
 
 # Initialize variables to store frame numbers
@@ -45,6 +45,9 @@ total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
 # Flag to check if the video is paused
 paused = False
 current_frame = 0
+fast_mode = False  # Flag for 10x speed mode (mapped to 'C')
+faster_mode = False  # Flag for 2x speed mode (mapped to 'Z')
+xfast_mode = False  # Flag for 5x speed mode (mapped to 'X')
 
 # Label input mode and buffer
 label_input_mode = False
@@ -55,13 +58,39 @@ if not cap.isOpened():
     print("Error: Could not open video file.")
     exit()
 
-print("Controls:")
-print("  S - Record Start Frame")
-print("  E - Record End Frame and Input Label")
-print("  SPACE - Pause/Resume Video")
-print("  D or RIGHT ARROW - Move Forward One Frame (when paused)")
-print("  A or LEFT ARROW - Move Backward One Frame (when paused)")
-print("  Q - Quit and Exit")
+# Controls legend to display in the top right corner
+controls_legend = [
+    "Controls:",
+    "SPACE: Play/Pause",
+    "C: Play 10x Speed",
+    "X: Play 5x Speed",
+    "Z: Play 2x Speed",
+    "D/RIGHT: Next Frame",
+    "A/LEFT: Prev Frame",
+    "J: Jump to Frame",
+    "F: Jump Forward 10s",
+    "G: Jump Forward 30s",
+    "S: Set Start Frame",
+    "E: Set End Frame & Label",
+    "Q: Quit"
+]
+
+def display_legend(frame):
+    """Displays the legend text on the top right corner of the frame."""
+    font = cv2.FONT_HERSHEY_SIMPLEX
+    font_scale = 0.5
+    font_color = (0, 255, 0)  # Green (same as frame number) in BGR format
+    thickness = 1
+    line_type = cv2.LINE_AA
+    
+    x_offset = frame.shape[1] - 250  # Adjust x position to the right side of the frame
+    y_offset = 30  # Start from the top, and adjust y position
+    
+    for i, line in enumerate(controls_legend):
+        y_position = y_offset + i * 20  # 20 pixels gap between lines
+        cv2.putText(frame, line, (x_offset, y_position), font, font_scale, font_color, thickness, line_type)
+
+print("Controls displayed on video.")
 
 while cap.isOpened():
     if not paused:
@@ -76,7 +105,7 @@ while cap.isOpened():
         # Overlay the frame number on the video
         frame_text = f"Frame: {current_frame}/{total_frames}"
         cv2.putText(frame, frame_text, (50, 50), cv2.FONT_HERSHEY_SIMPLEX,
-                    1, (0, 255, 0), 2, cv2.LINE_AA)
+                    1, (0, 255, 0), 2, cv2.LINE_AA)  # Green color for the frame number
 
         # Display label input if in input mode
         if label_input_mode:
@@ -84,10 +113,23 @@ while cap.isOpened():
             cv2.putText(frame, label_text, (50, 100), cv2.FONT_HERSHEY_SIMPLEX,
                         1, (255, 0, 0), 2, cv2.LINE_AA)
 
+        # Display the legend on the top right corner
+        display_legend(frame)
+
+        # Display the frame
         cv2.imshow('Video Labeling Tool', frame)
 
-    # Wait for key press with appropriate delay
-    key = cv2.waitKey(int(1000 / fps)) & 0xFF
+    # Set delay based on the mode (normal, 2x, 5x, or 10x speed)
+    if fast_mode:
+        wait_time = int(1000 / (fps * 10))
+    elif xfast_mode:
+        wait_time = int(1000 / (fps * 5))
+    elif faster_mode:
+        wait_time = int(1000 / (fps * 2))
+    else:
+        wait_time = int(1000 / fps)
+
+    key = cv2.waitKey(wait_time) & 0xFF
 
     if label_input_mode:
         # Input numbers while in label input mode
@@ -136,9 +178,33 @@ while cap.isOpened():
                 print("No start frame recorded. Press 'S' to record the start frame before pressing 'E'.")
 
         elif key == ord(' '):
-            # Toggle pause/resume
+            # Toggle pause/resume at normal speed
             paused = not paused
-            print(f"Video {'paused' if paused else 'resumed'}.")
+            fast_mode = False  # Disable 10x speed
+            faster_mode = False  # Disable 2x speed
+            xfast_mode = False  # Disable 5x speed
+            print(f"Video {'paused' if paused else 'resumed at normal speed'}.")
+
+        elif key == ord('c'):  # Play at 10x speed
+            paused = False
+            fast_mode = True  # Enable 10x speed
+            faster_mode = False  # Disable 2x speed
+            xfast_mode = False  # Disable 5x speed
+            print("Playing video at 10x speed.")
+
+        elif key == ord('z'):  # Play at 2x speed
+            paused = False
+            faster_mode = True  # Enable 2x speed
+            fast_mode = False  # Disable 10x speed
+            xfast_mode = False  # Disable 5x speed
+            print("Playing video at 2x speed.")
+
+        elif key == ord('x'):  # Play at 5x speed
+            paused = False
+            xfast_mode = True  # Enable 5x speed
+            fast_mode = False  # Disable 10x speed
+            faster_mode = False  # Disable 2x speed
+            print("Playing video at 5x speed.")
 
         elif key == ord('d') or key == 2555904:  # 'd' key or RIGHT ARROW
             if paused:
@@ -151,6 +217,7 @@ while cap.isOpened():
                         frame_text = f"Frame: {current_frame}/{total_frames}"
                         cv2.putText(frame, frame_text, (50, 50), cv2.FONT_HERSHEY_SIMPLEX,
                                     1, (0, 255, 0), 2, cv2.LINE_AA)
+                        display_legend(frame)  # Re-display legend after stepping frames
                         cv2.imshow('Video Labeling Tool', frame)
                         print(f"Moved forward to frame: {current_frame}")
                     else:
@@ -170,12 +237,63 @@ while cap.isOpened():
                     frame_text = f"Frame: {current_frame}/{total_frames}"
                     cv2.putText(frame, frame_text, (50, 50), cv2.FONT_HERSHEY_SIMPLEX,
                                 1, (0, 255, 0), 2, cv2.LINE_AA)
+                    display_legend(frame)  # Re-display legend after stepping frames
                     cv2.imshow('Video Labeling Tool', frame)
                     print(f"Moved backward to frame: {current_frame}")
                 else:
                     print("Warning: Could not retrieve the previous frame.")
             else:
                 print("Video is playing. Pause it before stepping frames.")
+
+        elif key == ord('j') and paused:  # 'j' key to jump to a specific frame
+            frame_number = int(input(f"Enter a frame number between 0 and {total_frames - 1}: "))
+            if 0 <= frame_number < total_frames:
+                cap.set(cv2.CAP_PROP_POS_FRAMES, frame_number)
+                ret, frame = cap.read()
+                if ret:
+                    current_frame = frame_number
+                    frame_text = f"Frame: {current_frame}/{total_frames}"
+                    cv2.putText(frame, frame_text, (50, 50), cv2.FONT_HERSHEY_SIMPLEX,
+                                1, (0, 255, 0), 2, cv2.LINE_AA)
+                    display_legend(frame)  # Re-display legend after jumping
+                    cv2.imshow('Video Labeling Tool', frame)
+                    print(f"Jumped to frame: {current_frame}")
+                else:
+                    print("Error: Could not retrieve the specified frame.")
+            else:
+                print(f"Invalid frame number. Please enter a number between 0 and {total_frames - 1}.")
+
+        elif key == ord('f') and paused:  # 'f' key to jump forward 10 seconds
+            frames_to_jump = int(10 * fps)  # Calculate how many frames correspond to 10 seconds
+            new_frame = min(current_frame + frames_to_jump, total_frames - 1)
+            cap.set(cv2.CAP_PROP_POS_FRAMES, new_frame)
+            ret, frame = cap.read()
+            if ret:
+                current_frame = new_frame
+                frame_text = f"Frame: {current_frame}/{total_frames}"
+                cv2.putText(frame, frame_text, (50, 50), cv2.FONT_HERSHEY_SIMPLEX,
+                            1, (0, 255, 0), 2, cv2.LINE_AA)
+                display_legend(frame)  # Re-display legend after jumping
+                cv2.imshow('Video Labeling Tool', frame)
+                print(f"Jumped forward 10 seconds to frame: {current_frame}")
+            else:
+                print("Error: Could not retrieve the specified frame.")
+
+        elif key == ord('g') and paused:  # 'g' key to jump forward 30 seconds
+            frames_to_jump = int(30 * fps)  # Calculate how many frames correspond to 30 seconds
+            new_frame = min(current_frame + frames_to_jump, total_frames - 1)
+            cap.set(cv2.CAP_PROP_POS_FRAMES, new_frame)
+            ret, frame = cap.read()
+            if ret:
+                current_frame = new_frame
+                frame_text = f"Frame: {current_frame}/{total_frames}"
+                cv2.putText(frame, frame_text, (50, 50), cv2.FONT_HERSHEY_SIMPLEX,
+                            1, (0, 255, 0), 2, cv2.LINE_AA)
+                display_legend(frame)  # Re-display legend after jumping
+                cv2.imshow('Video Labeling Tool', frame)
+                print(f"Jumped forward 30 seconds to frame: {current_frame}")
+            else:
+                print("Error: Could not retrieve the specified frame.")
 
         elif key == ord('q'):
             # Quit the program

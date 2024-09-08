@@ -139,7 +139,7 @@ while cap.isOpened():
             # Append the label to CSV
             if start_frame is not None and label_buffer.isdigit():
                 label = int(label_buffer)
-                if 1 <= label <= 70:
+                if 0 <= label <= 70:
                     # Append to in-memory list and CSV
                     label_data.append([start_frame, end_frame, label])
                     append_to_csv(csv_file, [start_frame, end_frame, label])

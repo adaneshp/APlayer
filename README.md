@@ -8,6 +8,14 @@ I don't usually share all the projects and code I develop, but I felt this one s
 
 ## Update Notes
 
+### Version: v1.2
+
+- **F Key**: The `F` key now jumps **backward by 10 seconds** when the video is paused.
+- **G Key**: The `G` key now jumps **forward by 10 seconds** when the video is paused (previously jumped forward 30 seconds).
+- The controls legend in the video overlay has been updated to reflect these changes.
+
+These updates improve video navigation, allowing for more precise control over frame jumps during labeling.
+
 ### Version: v1.1
 
 In this update, several key changes have been made to improve the video player functionality and user experience. Below is a detailed summary of the new features, key remappings, and improvements:

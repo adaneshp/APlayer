@@ -27,7 +27,7 @@ def append_to_csv(csv_file, row):
 initialize_csv(csv_file)
 
 # Load the video file
-video_file = "path/to/video.mp4"  # Replace with your actual video file path
+video_file = "path/to/file.mp4"  # Replace with your actual video file path
 cap = cv2.VideoCapture(video_file)
 
 # Initialize variables to store frame numbers
@@ -68,8 +68,8 @@ controls_legend = [
     "D/RIGHT: Next Frame",
     "A/LEFT: Prev Frame",
     "J: Jump to Frame",
-    "F: Jump Forward 10s",
-    "G: Jump Forward 30s",
+    "F: Jump Backward 10s",
+    "G: Jump Forward 10s",
     "S: Set Start Frame",
     "E: Set End Frame & Label",
     "Q: Quit"
@@ -263,7 +263,23 @@ while cap.isOpened():
             else:
                 print(f"Invalid frame number. Please enter a number between 0 and {total_frames - 1}.")
 
-        elif key == ord('f') and paused:  # 'f' key to jump forward 10 seconds
+        elif key == ord('f') and paused:  # 'f' key to jump backward 10 seconds
+            frames_to_jump = int(10 * fps)  # Calculate how many frames correspond to 10 seconds
+            new_frame = max(current_frame - frames_to_jump, 0)  # Ensure we don't go below frame 0
+            cap.set(cv2.CAP_PROP_POS_FRAMES, new_frame)
+            ret, frame = cap.read()
+            if ret:
+                current_frame = new_frame
+                frame_text = f"Frame: {current_frame}/{total_frames}"
+                cv2.putText(frame, frame_text, (50, 50), cv2.FONT_HERSHEY_SIMPLEX,
+                            1, (0, 255, 0), 2, cv2.LINE_AA)
+                display_legend(frame)  # Re-display legend after jumping
+                cv2.imshow('Video Labeling Tool', frame)
+                print(f"Jumped backward 10 seconds to frame: {current_frame}")
+            else:
+                print("Error: Could not retrieve the specified frame.")
+
+        elif key == ord('g') and paused:  # 'g' key to jump forward 10 seconds
             frames_to_jump = int(10 * fps)  # Calculate how many frames correspond to 10 seconds
             new_frame = min(current_frame + frames_to_jump, total_frames - 1)
             cap.set(cv2.CAP_PROP_POS_FRAMES, new_frame)
@@ -276,22 +292,6 @@ while cap.isOpened():
                 display_legend(frame)  # Re-display legend after jumping
                 cv2.imshow('Video Labeling Tool', frame)
                 print(f"Jumped forward 10 seconds to frame: {current_frame}")
-            else:
-                print("Error: Could not retrieve the specified frame.")
-
-        elif key == ord('g') and paused:  # 'g' key to jump forward 30 seconds
-            frames_to_jump = int(30 * fps)  # Calculate how many frames correspond to 30 seconds
-            new_frame = min(current_frame + frames_to_jump, total_frames - 1)
-            cap.set(cv2.CAP_PROP_POS_FRAMES, new_frame)
-            ret, frame = cap.read()
-            if ret:
-                current_frame = new_frame
-                frame_text = f"Frame: {current_frame}/{total_frames}"
-                cv2.putText(frame, frame_text, (50, 50), cv2.FONT_HERSHEY_SIMPLEX,
-                            1, (0, 255, 0), 2, cv2.LINE_AA)
-                display_legend(frame)  # Re-display legend after jumping
-                cv2.imshow('Video Labeling Tool', frame)
-                print(f"Jumped forward 30 seconds to frame: {current_frame}")
             else:
                 print("Error: Could not retrieve the specified frame.")
 

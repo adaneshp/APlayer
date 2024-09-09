@@ -5,9 +5,6 @@ import os
 # Initialize an empty list to store the label data (optional, for in-memory tracking)
 label_data = []
 
-# CSV file where the labels will be saved
-csv_file = "labels.csv"
-
 # Function to initialize the CSV file with headers if it doesn't exist
 def initialize_csv(csv_file):
     if not os.path.exists(csv_file):
@@ -23,11 +20,16 @@ def append_to_csv(csv_file, row):
         writer.writerow(row)
         print(f"Row written to CSV: {row}")
 
-# Initialize the CSV file
-initialize_csv(csv_file)
-
 # Load the video file
 video_file = "path/to/file.mp4"  # Replace with your actual video file path
+
+# Generate the CSV file name based on the video file name
+video_filename = os.path.basename(video_file)  # Extracts 'L1P1C2I.mp4'
+csv_filename = os.path.splitext(video_filename)[0] + ".csv"  # Converts to 'L1P1C2I.csv'
+
+# Initialize the CSV file
+initialize_csv(csv_filename)
+
 cap = cv2.VideoCapture(video_file)
 
 # Initialize variables to store frame numbers
@@ -142,7 +144,7 @@ while cap.isOpened():
                 if 0 <= label <= 70:
                     # Append to in-memory list and CSV
                     label_data.append([start_frame, end_frame, label])
-                    append_to_csv(csv_file, [start_frame, end_frame, label])
+                    append_to_csv(csv_filename, [start_frame, end_frame, label])
                     print(f"Label recorded: Start={start_frame}, End={end_frame}, Label={label}")
                     # Reset input mode and buffer
                     label_input_mode = False

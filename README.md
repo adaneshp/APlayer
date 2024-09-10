@@ -8,6 +8,24 @@ I don't usually share all the projects and code I develop, but I felt this one s
 
 ## Update Notes
 
+### Version: v2.0
+
+1. **Automatic Label Assignment**:
+   - The manual label input step after pressing `E` has been removed.
+   - Labels are now automatically applied based on the last label set using the `M` key.
+   
+2. **New `M` Key Functionality**:
+   - When the video is paused, pressing the `M` key will prompt the user to enter a label (number between 0 and 70) via the terminal.
+   - The program will pause everything until a valid label is received.
+   - The label entered via `M` will be used for all future labeling actions (via the `E` key) until it is updated again by pressing `M`.
+
+3. **Labeling Workflow**:
+   - **Set Start Frame (`S`)**: Press `S` to mark the start frame for a new label.
+   - **Set End Frame and Label (`E`)**: Press `E` to mark the end frame and automatically apply the last label set via `M`.
+   - **Update Label (`M`)**: Press `M` to enter a new label. The system will pause and wait for the user to input a number between 0 and 70.
+
+These changes streamline the labeling process by allowing users to set labels once and automatically apply them across multiple labeling actions, reducing repetitive input.
+
 ### Version: v1.2
 
 - **F Key**: The `F` key now jumps **backward by 10 seconds** when the video is paused.

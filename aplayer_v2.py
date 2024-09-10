@@ -5,9 +5,6 @@ import os
 # Initialize an empty list to store the label data (optional, for in-memory tracking)
 label_data = []
 
-# Global variable to store the label between 0 and 70, initially None
-current_label = None
-
 # Function to initialize the CSV file with headers if it doesn't exist
 def initialize_csv(csv_file):
     if not os.path.exists(csv_file):
@@ -27,7 +24,7 @@ def append_to_csv(csv_file, row):
 video_file = "path_to_file.mp4"  # Replace with your actual video file path
 
 # Generate the CSV file name based on the video file name
-video_filename = os.path.basename(video_file)
+video_filename = os.path.basename(video_file)  # Extracts 'L1P1C2I.mp4'
 csv_filename = os.path.splitext(video_filename)[0] + ".csv"  # Converts to 'L1P1C2I.csv'
 
 # Initialize the CSV file
@@ -54,6 +51,13 @@ fast_mode = False  # Flag for 10x speed mode (mapped to 'C')
 faster_mode = False  # Flag for 2x speed mode (mapped to 'Z')
 xfast_mode = False  # Flag for 5x speed mode (mapped to 'X')
 
+# Label input mode and buffer
+label_input_mode = False
+label_buffer = ""
+
+# New variable to store the default label
+default_label = None
+
 # Ensure the video file was opened successfully
 if not cap.isOpened():
     print("Error: Could not open video file.")
@@ -73,7 +77,7 @@ controls_legend = [
     "G: Jump Forward 10s",
     "S: Set Start Frame",
     "E: Set End Frame & Label",
-    "M: Set Label",
+    "M: Set Default Label",
     "Q: Quit"
 ]
 
@@ -109,6 +113,12 @@ while cap.isOpened():
         cv2.putText(frame, frame_text, (50, 50), cv2.FONT_HERSHEY_SIMPLEX,
                     1, (0, 255, 0), 2, cv2.LINE_AA)  # Green color for the frame number
 
+        # Display label input if in input mode
+        if label_input_mode:
+            label_text = f"Label: {label_buffer}"
+            cv2.putText(frame, label_text, (50, 100), cv2.FONT_HERSHEY_SIMPLEX,
+                        1, (255, 0, 0), 2, cv2.LINE_AA)
+
         # Display the legend on the top right corner
         display_legend(frame)
 
@@ -127,76 +137,197 @@ while cap.isOpened():
 
     key = cv2.waitKey(wait_time) & 0xFF
 
-    # Handle key presses
-    if key == ord('s'):
-        # Record the start frame
-        start_frame = current_frame
-        print(f"Start frame recorded: {start_frame}")
-
-    elif key == ord('e'):
-        # Record the end frame and use the stored label automatically
-        if start_frame is not None:
-            if current_label is not None:  # Use the stored label from 'M'
-                end_frame = current_frame
-                print(f"End frame recorded: {end_frame}")
-                print(f"Using stored label: {current_label}")
-                # Append to in-memory list and CSV
-                label_data.append([start_frame, end_frame, current_label])
-                append_to_csv(csv_filename, [start_frame, end_frame, current_label])
-                print(f"Label recorded: Start={start_frame}, End={end_frame}, Label={current_label}")
-            else:
-                print("No label has been set. Press 'M' to set a label.")
-        else:
-            print("No start frame recorded. Press 'S' to record the start frame before pressing 'E'.")
-
-    elif key == ord('m'):
-        # Pause the video and ask for a new label
-        paused = True
-        while True:
-            try:
-                new_label = int(input("Enter a label (0-70): "))
-                if 0 <= new_label <= 70:
-                    current_label = new_label
-                    print(f"Label updated to {current_label}")
-                    break
+    if label_input_mode:
+        # Input numbers while in label input mode
+        if ord('0') <= key <= ord('9'):
+            label_buffer += chr(key)
+        elif key == ord('\r') or key == 13:  # Enter key
+            # Append the label to CSV
+            if start_frame is not None and label_buffer.isdigit():
+                label = int(label_buffer)
+                if 0 <= label <= 70:
+                    # Append to in-memory list and CSV
+                    label_data.append([start_frame, end_frame, label])
+                    append_to_csv(csv_filename, [start_frame, end_frame, label])
+                    print(f"Label recorded: Start={start_frame}, End={end_frame}, Label={label}")
+                    # Reset input mode and buffer
+                    label_input_mode = False
+                    label_buffer = ""
+                    start_frame = None  # Reset start frame for next labeling
                 else:
                     print("Invalid label. Please enter a number between 0 and 70.")
-            except ValueError:
-                print("Invalid input. Please enter a valid number.")
+            else:
+                print("Label input canceled or invalid input.")
+                label_input_mode = False
+                label_buffer = ""
+        elif key == ord('\b'):  # Backspace key
+            label_buffer = label_buffer[:-1]
+        elif key == ord(' '):  # Space to exit input mode
+            label_input_mode = False
+            label_buffer = ""
 
-    elif key == ord(' '):
-        # Toggle pause/resume at normal speed
-        paused = not paused
-        fast_mode = False  # Disable 10x speed
-        faster_mode = False  # Disable 2x speed
-        xfast_mode = False  # Disable 5x speed
-        print(f"Video {'paused' if paused else 'resumed at normal speed'}.")
+    else:
+        # Handle key presses when not in input mode
+        if key == ord('s'):
+            # Record the start frame
+            start_frame = current_frame
+            print(f"Start frame recorded: {start_frame}")
 
-    elif key == ord('c'):  # Play at 10x speed
-        paused = False
-        fast_mode = True  # Enable 10x speed
-        faster_mode = False  # Disable 2x speed
-        xfast_mode = False  # Disable 5x speed
-        print("Playing video at 10x speed.")
+        elif key == ord('e'):
+            # Record the end frame and use default label if set, otherwise prompt for label input
+            if start_frame is not None:
+                end_frame = current_frame
+                print(f"End frame recorded: {end_frame}")
+                if default_label is not None:
+                    # Use the default label
+                    label = default_label
+                    label_data.append([start_frame, end_frame, label])
+                    append_to_csv(csv_filename, [start_frame, end_frame, label])
+                    print(f"Label recorded: Start={start_frame}, End={end_frame}, Label={label}")
+                    start_frame = None  # Reset start frame for next labeling
+                else:
+                    print("*******ENTER ACTION LABEL PLEASE*******")
+                    label_input_mode = True
+                    label_buffer = ""
+            else:
+                print("No start frame recorded. Press 'S' to record the start frame before pressing 'E'.")
 
-    elif key == ord('z'):  # Play at 2x speed
-        paused = False
-        faster_mode = True  # Enable 2x speed
-        fast_mode = False  # Disable 10x speed
-        xfast_mode = False  # Disable 5x speed
-        print("Playing video at 2x speed.")
+        elif key == ord('m'):
+            # Set default label
+            default_label_input = input("Enter default label (0-70): ")
+            if default_label_input.isdigit():
+                default_label = int(default_label_input)
+                if 0 <= default_label <= 70:
+                    print(f"Default label set to: {default_label}")
+                else:
+                    print("Invalid label. Please enter a number between 0 and 70.")
+                    default_label = None
+            else:
+                print("Invalid input. Default label not set.")
+                default_label = None
 
-    elif key == ord('x'):  # Play at 5x speed
-        paused = False
-        xfast_mode = True  # Enable 5x speed
-        fast_mode = False  # Disable 10x speed
-        faster_mode = False  # Disable 2x speed
-        print("Playing video at 5x speed.")
+        elif key == ord(' '):
+            # Toggle pause/resume at normal speed
+            paused = not paused
+            fast_mode = False  # Disable 10x speed
+            faster_mode = False  # Disable 2x speed
+            xfast_mode = False  # Disable 5x speed
+            print(f"Video {'paused' if paused else 'resumed at normal speed'}.")
 
-    elif key == ord('q'):
-        # Quit the program
-        print("Quitting the application.")
-        break
+        elif key == ord('c'):  # Play at 10x speed
+            paused = False
+            fast_mode = True  # Enable 10x speed
+            faster_mode = False  # Disable 2x speed
+            xfast_mode = False  # Disable 5x speed
+            print("Playing video at 10x speed.")
+
+        elif key == ord('z'):  # Play at 2x speed
+            paused = False
+            faster_mode = True  # Enable 2x speed
+            fast_mode = False  # Disable 10x speed
+            xfast_mode = False  # Disable 5x speed
+            print("Playing video at 2x speed.")
+
+        elif key == ord('x'):  # Play at 5x speed
+            paused = False
+            xfast_mode = True  # Enable 5x speed
+            fast_mode = False  # Disable 10x speed
+            faster_mode = False  # Disable 2x speed
+            print("Playing video at 5x speed.")
+
+        elif key == ord('d') or key == 2555904:  # 'd' key or RIGHT ARROW
+            if paused:
+                new_frame = current_frame + 1
+                if new_frame < total_frames:
+                    cap.set(cv2.CAP_PROP_POS_FRAMES, new_frame)
+                    ret, frame = cap.read()
+                    if ret:
+                        current_frame = new_frame
+                        frame_text = f"Frame: {current_frame}/{total_frames}"
+                        cv2.putText(frame, frame_text, (50, 50), cv2.FONT_HERSHEY_SIMPLEX,
+                                    1, (0, 255, 0), 2, cv2.LINE_AA)
+                        display_legend(frame)  # Re-display legend after stepping frames
+                        cv2.imshow('Video Labeling Tool', frame)
+                        print(f"Moved forward to frame: {current_frame}")
+                    else:
+                        print("Warning: Could not retrieve the next frame.")
+                else:
+                    print("Already at the last frame.")
+            else:
+                print("Video is playing. Pause it before stepping frames.")
+
+        elif key == ord('a') or key == 2424832:  # 'a' key or LEFT ARROW
+            if paused:
+                new_frame = max(current_frame - 1, 0)
+                cap.set(cv2.CAP_PROP_POS_FRAMES, new_frame)
+                ret, frame = cap.read()
+                if ret:
+                    current_frame = new_frame
+                    frame_text = f"Frame: {current_frame}/{total_frames}"
+                    cv2.putText(frame, frame_text, (50, 50), cv2.FONT_HERSHEY_SIMPLEX,
+                                1, (0, 255, 0), 2, cv2.LINE_AA)
+                    display_legend(frame)  # Re-display legend after stepping frames
+                    cv2.imshow('Video Labeling Tool', frame)
+                    print(f"Moved backward to frame: {current_frame}")
+                else:
+                    print("Warning: Could not retrieve the previous frame.")
+            else:
+                print("Video is playing. Pause it before stepping frames.")
+
+        elif key == ord('j') and paused:  # 'j' key to jump to a specific frame
+            frame_number = int(input(f"Enter a frame number between 0 and {total_frames - 1}: "))
+            if 0 <= frame_number < total_frames:
+                cap.set(cv2.CAP_PROP_POS_FRAMES, frame_number)
+                ret, frame = cap.read()
+                if ret:
+                    current_frame = frame_number
+                    frame_text = f"Frame: {current_frame}/{total_frames}"
+                    cv2.putText(frame, frame_text, (50, 50), cv2.FONT_HERSHEY_SIMPLEX,
+                                1, (0, 255, 0), 2, cv2.LINE_AA)
+                    display_legend(frame)  # Re-display legend after jumping
+                    cv2.imshow('Video Labeling Tool', frame)
+                    print(f"Jumped to frame: {current_frame}")
+                else:
+                    print("Error: Could not retrieve the specified frame.")
+            else:
+                print(f"Invalid frame number. Please enter a number between 0 and {total_frames - 1}.")
+
+        elif key == ord('f') and paused:  # 'f' key to jump backward 10 seconds
+            frames_to_jump = int(10 * fps)  # Calculate how many frames correspond to 10 seconds
+            new_frame = max(current_frame - frames_to_jump, 0)  # Ensure we don't go below frame 0
+            cap.set(cv2.CAP_PROP_POS_FRAMES, new_frame)
+            ret, frame = cap.read()
+            if ret:
+                current_frame = new_frame
+                frame_text = f"Frame: {current_frame}/{total_frames}"
+                cv2.putText(frame, frame_text, (50, 50), cv2.FONT_HERSHEY_SIMPLEX,
+                            1, (0, 255, 0), 2, cv2.LINE_AA)
+                display_legend(frame)  # Re-display legend after jumping
+                cv2.imshow('Video Labeling Tool', frame)
+                print(f"Jumped backward 10 seconds to frame: {current_frame}")
+            else:
+                print("Error: Could not retrieve the specified frame.")
+
+        elif key == ord('g') and paused:  # 'g' key to jump forward 10 seconds
+            frames_to_jump = int(10 * fps)  # Calculate how many frames correspond to 10 seconds
+            new_frame = min(current_frame + frames_to_jump, total_frames - 1)
+            cap.set(cv2.CAP_PROP_POS_FRAMES, new_frame)
+            ret, frame = cap.read()
+            if ret:
+                current_frame = new_frame
+                frame_text = f"Frame: {current_frame}/{total_frames}"
+                cv2.putText(frame, frame_text, (50, 50), cv2.FONT_HERSHEY_SIMPLEX,
+                            1, (0, 255, 0), 2, cv2.LINE_AA)
+                display_legend(frame)  # Re-display legend after jumping
+                cv2.imshow('Video Labeling Tool', frame)
+                print(f"Jumped forward 10 seconds to frame: {current_frame}")
+            else:
+                print("Error: Could not retrieve the specified frame.")
+
+        elif key == ord('q'):
+            # Quit the program
+            print("Quitting the application.")
+            break
 
 # Release resources and close windows
 cap.release()
